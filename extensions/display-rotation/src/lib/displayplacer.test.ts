@@ -1,6 +1,12 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { findDisplayById, normalizeRotation, parseArgString, parseDisplayList } from "./displayplacer";
+import {
+  findDisplayById,
+  normalizeRotation,
+  parseArgString,
+  parseDisplayList,
+  parseLayoutCommand,
+} from "./displayplacer";
 
 const BUILTIN_ID = "11111111-1111-4111-8111-111111111111";
 const EXTERNAL_ID = "22222222-2222-4222-8222-222222222222";
@@ -23,6 +29,7 @@ describe("parseDisplayList", () => {
         rotation: 0,
         origin: { x: 0, y: 0 },
         enabled: true,
+        isBuiltIn: true,
       },
       {
         persistentId: EXTERNAL_ID,
@@ -32,6 +39,7 @@ describe("parseDisplayList", () => {
         rotation: 0,
         origin: { x: 1440, y: -180 },
         enabled: true,
+        isBuiltIn: false,
       },
     ]);
   });
@@ -90,6 +98,12 @@ describe("parseDisplayList", () => {
     });
   });
 
+  it("flags which screen is the built-in one", () => {
+    const displays = parseDisplayList(fixture("two-externals.txt"));
+
+    expect(displays.map((display) => display.isBuiltIn)).toEqual([true, false, false]);
+  });
+
   it("returns nothing for empty or unrelated output", () => {
     expect(parseDisplayList("")).toEqual([]);
     expect(parseDisplayList("displayplacer: command not found\n")).toEqual([]);
@@ -110,6 +124,30 @@ describe("parseDisplayList", () => {
     const crlf = fixture("builtin-only.txt").replace(/\n/g, "\r\n");
 
     expect(parseDisplayList(crlf)).toHaveLength(1);
+  });
+});
+
+describe("parseLayoutCommand", () => {
+  it("reads the arrangement displayplacer prints at the end of the listing", () => {
+    const segments = parseLayoutCommand(fixture("builtin-and-external.txt"));
+
+    expect(segments).toEqual([
+      `id:${BUILTIN_ID} res:1440x900 hz:60 color_depth:8 enabled:true scaling:on origin:(0,0) degree:0`,
+      `id:${EXTERNAL_ID} res:1920x1080 hz:60 color_depth:8 enabled:true scaling:off origin:(1440,-180) degree:0`,
+    ]);
+  });
+
+  it("returns one segment per screen", () => {
+    expect(parseLayoutCommand(fixture("two-externals.txt"))).toHaveLength(3);
+    expect(parseLayoutCommand(fixture("builtin-only.txt"))).toHaveLength(1);
+  });
+
+  it("keeps the short form displayplacer uses for a disabled screen", () => {
+    expect(parseLayoutCommand(fixture("disabled-external.txt"))[1]).toBe(`id:${EXTERNAL_ID} enabled:false`);
+  });
+
+  it("returns nothing when the output has no such line", () => {
+    expect(parseLayoutCommand("Persistent screen id: abc\n")).toEqual([]);
   });
 });
 

@@ -1,17 +1,12 @@
 import { describe, expect, it } from "vitest";
-import {
-  NATURAL,
-  ROTATED,
-  layoutArgumentsFor,
-  parseRotationArgument,
-  resolveTargetRotation,
-  rotationLabel,
-} from "./rotation";
+import { NATURAL, ROTATED, parseRotationArgument, resolveTargetRotation, rotationLabel } from "./rotation";
 
 describe("parseRotationArgument", () => {
-  it("reads the two dropdown values", () => {
+  it("reads every dropdown value", () => {
     expect(parseRotationArgument("0")).toBe(NATURAL);
     expect(parseRotationArgument("90")).toBe(ROTATED);
+    expect(parseRotationArgument("180")).toBe(180);
+    expect(parseRotationArgument("270")).toBe(270);
   });
 
   it("treats an unpicked dropdown as a toggle", () => {
@@ -22,7 +17,8 @@ describe("parseRotationArgument", () => {
   });
 
   it("rejects a value the manifest does not offer", () => {
-    expect(() => parseRotationArgument("180")).toThrow(/Unknown rotation argument/);
+    expect(() => parseRotationArgument("45")).toThrow(/Unknown rotation argument/);
+    expect(() => parseRotationArgument("natural")).toThrow(/Unknown rotation argument/);
   });
 });
 
@@ -46,15 +42,6 @@ describe("resolveTargetRotation", () => {
   it("normalizes the current rotation before toggling", () => {
     expect(resolveTargetRotation(360, undefined)).toBe(ROTATED);
     expect(resolveTargetRotation(-90, undefined)).toBe(NATURAL);
-  });
-});
-
-describe("layoutArgumentsFor", () => {
-  const preferences = { naturalArgs: '"id:1 degree:0"', rotatedArgs: '"id:1 degree:90"' };
-
-  it("picks the layout preference matching the target", () => {
-    expect(layoutArgumentsFor(NATURAL, preferences)).toBe('"id:1 degree:0"');
-    expect(layoutArgumentsFor(ROTATED, preferences)).toBe('"id:1 degree:90"');
   });
 });
 
