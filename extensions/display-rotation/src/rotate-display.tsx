@@ -1,24 +1,13 @@
-import {
-  Action,
-  ActionPanel,
-  Alert,
-  Color,
-  Icon,
-  Keyboard,
-  List,
-  Toast,
-  confirmAlert,
-  getPreferenceValues,
-  showToast,
-} from "@raycast/api";
+import { Action, ActionPanel, Color, Icon, Keyboard, List, Toast, getPreferenceValues, showToast } from "@raycast/api";
 import { runAppleScript, showFailureToast, usePromise } from "@raycast/utils";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { useState } from "react";
 import { SCREEN_NAMES_SCRIPT } from "./lib/applescript";
 import { parseDisplayList, parseLayoutCommand } from "./lib/displayplacer";
 import { rotateLayout } from "./lib/layout";
 import { rotationChoices, rotationLabel, type TargetRotation } from "./lib/rotation";
-import { nameDisplays, parseScreenNames, type NamedDisplay } from "./lib/screens";
+import { externalScreens, nameDisplays, parseScreenNames, type NamedDisplay } from "./lib/screens";
 
 const run = promisify(execFile);
 
@@ -35,12 +24,19 @@ interface Desktop {
   layout: string[];
 }
 
+interface PendingRotation {
+  persistentId: string;
+  degrees: TargetRotation;
+}
+
 export default function Command() {
   const { displayplacerPath } = getPreferenceValues<Preferences>();
   const { data, error, isLoading, revalidate } = usePromise(() => readDesktop(displayplacerPath));
+  const [pending, setPending] = useState<PendingRotation | undefined>();
 
   async function rotate(screen: NamedDisplay, degrees: TargetRotation) {
-    if (screen.isBuiltIn && !(await confirmBuiltInRotation(screen.name))) return;
+    if (pending !== undefined) return;
+    setPending({ persistentId: screen.persistentId, degrees });
 
     const toast = await showToast({
       style: Toast.Style.Animated,
@@ -67,31 +63,32 @@ export default function Command() {
       await toast.hide();
       await showFailureToast(rotationError, { title: `Could not rotate ${screen.name}` });
     } finally {
+      setPending(undefined);
       revalidate();
     }
   }
 
-  const screens = data?.screens ?? [];
+  const screens = externalScreens(data?.screens ?? []);
 
   return (
-    <List isLoading={isLoading} searchBarPlaceholder="Search displays…">
+    <List isLoading={isLoading || pending !== undefined} searchBarPlaceholder="Search displays…">
       {screens.length === 0 ? (
         <List.EmptyView
           icon={Icon.Monitor}
-          title={error ? "Could not run displayplacer" : "No displays found"}
-          description={error ? error.message : "displayplacer reported no screens."}
+          title={error ? "Could not run displayplacer" : "No external displays"}
+          description={error ? error.message : "Only the built-in display is connected."}
         />
       ) : (
         screens.map((screen) => (
           <List.Item
             key={screen.persistentId}
-            icon={screen.isBuiltIn ? Icon.Desktop : Icon.Monitor}
+            icon={Icon.Monitor}
             title={screen.name}
             subtitle={`${screen.resolution.width}×${screen.resolution.height}`}
-            accessories={accessoriesFor(screen)}
+            accessories={accessoriesFor(screen, pending)}
             actions={
               <ActionPanel>
-                {screen.enabled && (
+                {screen.enabled && pending === undefined && (
                   <ActionPanel.Section title={screen.name}>
                     {rotationChoices(screen.rotation).map((degrees) => (
                       <Action
@@ -125,7 +122,11 @@ export default function Command() {
   );
 }
 
-function accessoriesFor(screen: NamedDisplay): List.Item.Accessory[] {
+/**
+ * The rotation a screen is in — or, while displayplacer is working on it, the
+ * rotation it is heading for.
+ */
+function accessoriesFor(screen: NamedDisplay, pending: PendingRotation | undefined): List.Item.Accessory[] {
   const accessories: List.Item.Accessory[] = [];
   if (!screen.enabled) {
     accessories.push({ tag: { value: "Disabled", color: Color.SecondaryText } });
@@ -133,19 +134,17 @@ function accessoriesFor(screen: NamedDisplay): List.Item.Accessory[] {
   if (screen.origin.x === 0 && screen.origin.y === 0) {
     accessories.push({ tag: { value: "Main", color: Color.SecondaryText } });
   }
-  accessories.push({ tag: rotationLabel(screen.rotation) });
-  return accessories;
-}
 
-/** displayplacer warns that rotating the internal screen can hang the Mac. */
-function confirmBuiltInRotation(name: string): Promise<boolean> {
-  return confirmAlert({
-    icon: Icon.Warning,
-    title: `Rotate ${name}?`,
-    message:
-      "displayplacer warns that rotating the built-in screen may crash the computer. It will be rotated after a reboot.",
-    primaryAction: { title: "Rotate Anyway", style: Alert.ActionStyle.Destructive },
-  });
+  if (pending?.persistentId === screen.persistentId) {
+    accessories.push({
+      icon: Icon.CircleProgress50,
+      tag: { value: `Rotating to ${rotationLabel(pending.degrees)}…`, color: Color.Yellow },
+    });
+  } else {
+    accessories.push({ tag: rotationLabel(screen.rotation) });
+  }
+
+  return accessories;
 }
 
 /** Everything the command knows about the desktop, all of it discovered. */

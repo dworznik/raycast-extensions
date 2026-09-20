@@ -40,12 +40,17 @@ function fallbackName(display: Display): string {
 }
 
 /**
- * The screen to rotate when the command was run without naming one: the single
- * external screen. The built-in is never picked implicitly, because
- * displayplacer warns that rotating it can hang the machine.
+ * Everything except the built-in screen. displayplacer warns that rotating the
+ * internal display may crash the machine, so it is left out of the list
+ * entirely rather than offered and guarded.
  */
+export function externalScreens(screens: NamedDisplay[]): NamedDisplay[] {
+  return screens.filter((screen) => !screen.isBuiltIn);
+}
+
+/** The one external screen, when there is exactly one to act on. */
 export function defaultScreen(screens: NamedDisplay[]): NamedDisplay | undefined {
-  const externals = screens.filter((screen) => !screen.isBuiltIn && screen.enabled);
+  const externals = externalScreens(screens).filter((screen) => screen.enabled);
   return externals.length === 1 ? externals[0] : undefined;
 }
 
