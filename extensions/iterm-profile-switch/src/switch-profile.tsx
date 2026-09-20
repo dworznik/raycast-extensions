@@ -1,9 +1,12 @@
 import { getPreferenceValues, showHUD } from "@raycast/api";
 import { runAppleScript, showFailureToast } from "@raycast/utils";
-import { writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { PROBE_SCRIPT, buildEditSessionScript, buildReadProfileScript } from "./lib/applescript";
-import { resolveProfileName, setProfileEscapeSequence, type ProfilePreferences } from "./lib/iterm";
+import { resolveProfileName, setProfileEscapeSequence, ttyWriteCommand, type ProfilePreferences } from "./lib/iterm";
 import { ITERM_BUNDLE_ID, parseProbeOutput, screenForWindow } from "./lib/screens";
+
+const run = promisify(execFile);
 
 /** iTerm2 applies a profile change a moment after the control sequence lands. */
 const APPLY_MS = 250;
@@ -58,7 +61,8 @@ export default async function Command() {
  * that did not take.
  */
 async function applyProfile(tty: string, profileName: string): Promise<boolean> {
-  await writeFile(tty, setProfileEscapeSequence(profileName));
+  const { file, args } = ttyWriteCommand(tty, setProfileEscapeSequence(profileName));
+  await run(file, args);
   if (await profileIsActive(tty, profileName)) return true;
 
   await runAppleScript(buildEditSessionScript(profileName));

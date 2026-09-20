@@ -20,6 +20,12 @@ pnpm --filter iterm-profile-switch dev
 
 The extension stays installed in Raycast after you stop the process.
 
+For [Tinycast](https://github.com/abue-ammar/tinycast) instead of Raycast, build the distributable bundle and add its folder in Tinycast's Settings → Extensions:
+
+```sh
+pnpm --filter iterm-profile-switch dist
+```
+
 ## macOS permissions
 
 | Permission                 | When                                             |
