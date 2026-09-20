@@ -1,17 +1,19 @@
 # Display Rotation
 
-A Raycast command that rotates any connected display with [`displayplacer`](https://github.com/jakehilborn/displayplacer). Nothing is configured: the screens, their names, their current rotation and the layout to apply are all discovered each time the command runs.
+A Raycast command that lists the connected displays and rotates the one you pick, using [`displayplacer`](https://github.com/jakehilborn/displayplacer). Nothing is configured: the screens, their names, their current rotation and the layout to apply are all discovered each time the command runs.
 
-Run **Rotate Display** and it toggles the external screen — natural becomes 90°, anything else goes back to natural. Two optional arguments narrow that down:
+```
+┌────────────────────────────────────────────────────────┐
+│ Search displays...                                     │
+├────────────────────────────────────────────────────────┤
+│ 🖥  ASUS MB16AH              1920×1080          Natural │
+│ 💻  Built-in Retina Display  1440×900     Main  Natural │
+└────────────────────────────────────────────────────────┘
+```
 
-| Argument     | Empty means             | Otherwise                                                                                     |
-| ------------ | ----------------------- | --------------------------------------------------------------------------------------------- |
-| **Screen**   | the one external screen | a screen name or prefix, e.g. `asus`, matched case-insensitively (a persistent id also works) |
-| **Rotation** | toggle                  | the rotation you pick: Natural, 90°, 180° or 270°                                             |
+Pick a display and the action panel offers the rotations it is not already in, with the toggle — natural ↔ 90° — first, so Enter flips it. Nothing happens until you choose an action. `⌘R` re-reads the displays, `⌘⇧C` copies a persistent id.
 
-Assign a Raycast hotkey or alias to flip the display without opening the launcher. Success shows a HUD naming the screen; failures — no such screen, an ambiguous name, a rotation that did not take — come back as a toast listing the connected screens.
-
-The built-in screen is never picked implicitly, because displayplacer warns that rotating it can hang the machine. Name it explicitly if you want it rotated anyway.
+Rotating the built-in screen asks for confirmation first, because displayplacer warns it may crash the machine. A disabled screen is listed but offers no rotations.
 
 ## Requirements
 
