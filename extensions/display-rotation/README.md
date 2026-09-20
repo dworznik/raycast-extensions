@@ -1,8 +1,10 @@
 # Display Rotation
 
-A Raycast menu bar item that flips one display between its natural and 90° layout with [`displayplacer`](https://github.com/jakehilborn/displayplacer).
+A Raycast command that rotates one display between its natural and 90° layout with [`displayplacer`](https://github.com/jakehilborn/displayplacer).
 
-The 🖥️ menu holds two entries, **Natural** and **Rotate 90°**, with a checkmark on whichever rotation is active, and a single disabled **Display not connected** entry when the configured display is not attached. Selecting a rotation runs `displayplacer` with the layout you configured, waits for macOS to settle, and re-reads the state so the checkmark follows.
+Run **Rotate Display** and it toggles: natural becomes 90°, anything else goes back to natural. The command also takes an optional **Rotation** dropdown — pick _Natural_ or _90°_ to set one explicitly instead of toggling. Either way it runs `displayplacer` with the layout you configured, waits for macOS to settle, and re-reads the display to confirm the rotation took before reporting success.
+
+Assign a Raycast hotkey or alias to it to flip the display without opening the launcher. Nothing is shown when it succeeds beyond a HUD; failures (display unplugged, bad layout string) come back as a toast.
 
 ## Requirements
 
@@ -44,6 +46,8 @@ A layout string looks like this (one quoted block per screen):
 The command runs `displayplacer` through `execFile` with the string split into arguments, so no shell is involved.
 
 ## How it works
+
+`src/lib/rotation.ts` decides where a run should end up: an explicit dropdown value wins, otherwise the natural rotation toggles to 90° and every other rotation (including a display someone left at 180°) goes back to natural.
 
 `src/lib/displayplacer.ts` parses `displayplacer list`: blank-line separated blocks, each with the geometry of one screen followed by its available modes under `Resolutions for rotation N:`, and a trailing footer holding the command that recreates the arrangement. Only blocks carrying a `Persistent screen id:` line and a complete set of geometry fields count as displays.
 
