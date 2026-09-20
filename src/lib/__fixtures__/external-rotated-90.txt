@@ -1,0 +1,35 @@
+Persistent screen id: 11111111-1111-4111-8111-111111111111
+Contextual screen id: 1
+Serial screen id: s4251086178
+Type: MacBook built in screen
+Resolution: 1440x900
+Hertz: 60
+Color Depth: 8
+Scaling: on
+Origin: (0,0) - main display
+Rotation: 0 - rotate internal screen example (may crash computer, but will be rotated after rebooting): `displayplacer "id:11111111-1111-4111-8111-111111111111 degree:90"`
+Enabled: true
+Resolutions for rotation 0:
+  mode 0: res:1280x800 hz:60 color_depth:8 scaling:on
+  mode 1: res:1440x900 hz:60 color_depth:8 scaling:on <-- current mode
+  mode 2: res:2560x1600 hz:60 color_depth:8
+
+Persistent screen id: 22222222-2222-4222-8222-222222222222
+Contextual screen id: 2
+Serial screen id: s8293
+Type: 15 inch external screen
+Resolution: 1080x1920
+Hertz: 60
+Color Depth: 8
+Scaling: off
+Origin: (1440,-1020)
+Rotation: 90
+Enabled: true
+Resolutions for rotation 90:
+  mode 0: res:720x1280 hz:60 color_depth:8
+  mode 1: res:900x1600 hz:60 color_depth:8
+  mode 2: res:1080x1920 hz:60 color_depth:8 <-- current mode
+
+Execute the command below to set your screens to the current arrangement. If screen ids are switching, please run `displayplacer --help` for info on using contextual or serial ids instead of persistent ids.
+
+displayplacer "id:11111111-1111-4111-8111-111111111111 res:1440x900 hz:60 color_depth:8 enabled:true scaling:on origin:(0,0) degree:0" "id:22222222-2222-4222-8222-222222222222 res:1080x1920 hz:60 color_depth:8 enabled:true scaling:off origin:(1440,-1020) degree:90"
