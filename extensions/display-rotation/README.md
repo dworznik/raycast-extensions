@@ -3,17 +3,19 @@
 A Raycast command that lists the connected displays and rotates the one you pick, using [`displayplacer`](https://github.com/jakehilborn/displayplacer). Nothing is configured: the screens, their names, their current rotation and the layout to apply are all discovered each time the command runs.
 
 ```
-┌────────────────────────────────────────────────────────┐
-│ Search displays...                                     │
-├────────────────────────────────────────────────────────┤
-│ 🖥  ASUS MB16AH              1920×1080          Natural │
-│ 💻  Built-in Retina Display  1440×900     Main  Natural │
-└────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│ Search displays...                               │
+├──────────────────────────────────────────────────┤
+│ 🖥  ASUS MB16AH          1920×1080        Natural │
+│ 🖥  DELL U2720Q          2560×1440   Main    180° │
+└──────────────────────────────────────────────────┘
 ```
 
 Pick a display and the action panel offers the rotations it is not already in, with the toggle — natural ↔ 90° — first, so Enter flips it. Nothing happens until you choose an action. `⌘R` re-reads the displays, `⌘⇧C` copies a persistent id.
 
-Rotating the built-in screen asks for confirmation first, because displayplacer warns it may crash the machine. A disabled screen is listed but offers no rotations.
+While displayplacer is working, that display's rotation is replaced by where it is heading — `Rotating to 90°…` — and no further rotation can be started until it finishes.
+
+The built-in display is not listed: displayplacer warns that rotating the internal screen may crash the machine. A disabled external screen is listed, but offers no rotations.
 
 ## Requirements
 

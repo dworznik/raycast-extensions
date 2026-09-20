@@ -1,7 +1,14 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parseDisplayList, type Display } from "./displayplacer";
-import { defaultScreen, matchScreens, nameDisplays, parseScreenNames, type NamedDisplay } from "./screens";
+import {
+  defaultScreen,
+  externalScreens,
+  matchScreens,
+  nameDisplays,
+  parseScreenNames,
+  type NamedDisplay,
+} from "./screens";
 
 /** Captured from the real probe on a laptop with one external screen. */
 const NAME_TABLE = ["1\tBuilt-in Retina Display", "2\tASUS MB16AH", ""].join("\n");
@@ -52,6 +59,23 @@ describe("nameDisplays", () => {
     const [rawBuiltIn] = parseDisplayList(fixture("builtin-and-external.txt")) as Display[];
 
     expect(builtIn).toMatchObject(rawBuiltIn);
+  });
+});
+
+describe("externalScreens", () => {
+  it("drops the built-in screen", () => {
+    expect(externalScreens(screensFrom("builtin-and-external.txt")).map((screen) => screen.name)).toEqual([
+      "ASUS MB16AH",
+    ]);
+  });
+
+  it("keeps every external screen, including a disabled one", () => {
+    expect(externalScreens(screensFrom("two-externals.txt"))).toHaveLength(2);
+    expect(externalScreens(screensFrom("disabled-external.txt"))).toHaveLength(1);
+  });
+
+  it("returns nothing on a laptop with no external screen", () => {
+    expect(externalScreens(screensFrom("builtin-only.txt"))).toEqual([]);
   });
 });
 
