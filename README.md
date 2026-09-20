@@ -17,39 +17,39 @@ extensions/
   iterm-profile-switch/   one Raycast extension, one command
 ```
 
-npm workspaces tie them together: one `npm install` at the root, one set of dev dependencies, one lint/test/typecheck setup, and one CI run covering both. Everything Raycast cares about — manifest, icon, source — lives inside the extension directory.
+A pnpm workspace ties them together: one `pnpm install` at the root, one catalog pinning every shared dependency version, one lint/test/typecheck setup, and one CI run covering both. Everything Raycast cares about — manifest, icon, source — lives inside the extension directory.
 
 ## Install an extension
 
 ```sh
 git clone https://github.com/dworznik/raycast-extensions.git
 cd raycast-extensions
-npm install
-npm run dev -w extensions/display-rotation      # or -w extensions/iterm-profile-switch
+pnpm install
+pnpm --filter display-rotation dev      # or --filter iterm-profile-switch
 ```
 
-`npm run dev` builds that one extension and imports it into Raycast, where it stays installed after you stop the process with `Ctrl-C`. Run it again for the other directory if you want both. Each extension's README covers its preferences, the macOS permissions it needs, and how it works.
+`pnpm … dev` builds that one extension and imports it into Raycast, where it stays installed after you stop the process with `Ctrl-C`. Run it again for the other package if you want both. Each extension's README covers its preferences, the macOS permissions it needs, and how it works.
 
 ## Development
 
-Run from the repo root to cover both extensions, or add `-w extensions/<name>` to work on one:
+Run from the repo root to cover both extensions, or add `--filter <name>` to work on one:
 
-| Script                              | What it does                                                        |
-| ----------------------------------- | ------------------------------------------------------------------- |
-| `npm run dev -w extensions/<name>`  | `ray develop` for that extension                                    |
-| `npm run build`                     | `ray build` in every extension                                      |
-| `npm run lint` / `npm run fix-lint` | `ray lint` (ESLint + Prettier + manifest checks) in every extension |
-| `npm run typecheck`                 | `tsc --noEmit` at the root and in every extension                   |
-| `npm test` / `npm run test:watch`   | Vitest across every extension                                       |
+| Script                                | What it does                                                        |
+| ------------------------------------- | ------------------------------------------------------------------- |
+| `pnpm --filter <name> dev`            | `ray develop` for that extension                                    |
+| `pnpm run build`                      | `ray build` in every extension                                      |
+| `pnpm run lint` / `pnpm run fix-lint` | `ray lint` (ESLint + Prettier + manifest checks) in every extension |
+| `pnpm run typecheck`                  | `tsc --noEmit` at the root and in every extension                   |
+| `pnpm test` / `pnpm run test:watch`   | Vitest across every extension                                       |
 
 `@raycast/api` cannot be imported from tests, so each extension is laid out the same way:
 
 - `src/lib/*.ts` — every piece of logic, as pure functions with no Raycast imports, each with a Vitest spec next to it.
 - `src/*.tsx` — thin command shells: read preferences, call into `src/lib`, render or toast.
 
-Shared configuration lives at the root: `tsconfig.base.json` (each extension extends it), `eslint.config.js`, `.prettierrc` and `vitest.config.ts`. CI runs lint, typecheck, tests and `ray build` for both extensions on macOS.
+Shared configuration lives at the root: `tsconfig.base.json` (each extension extends it), `eslint.config.js`, `.prettierrc` and `vitest.config.ts`. Dependency versions live once in the `catalog:` block of `pnpm-workspace.yaml`, so each package.json says `"@raycast/api": "catalog:"` rather than a version. CI runs lint, typecheck, tests and `ray build` for both extensions on macOS.
 
-One wrinkle worth knowing: with `CI=true`, `ray lint` insists on a `package-lock.json` inside each extension folder, which is what the Raycast Store expects. A workspace keeps a single lockfile at the root instead, so the CI lint step unsets that flag. Publishing an extension to the Store later would mean generating a lockfile in its directory.
+Two wrinkles worth knowing, both from the Raycast Store's expectation that an extension is a standalone directory. With `CI=true`, `ray lint` insists on a lockfile inside each extension folder; a workspace keeps one at the root, so the CI lint step unsets that flag. And the `catalog:` versions are a pnpm protocol the Store would not understand. Publishing an extension there later would mean giving its directory a real lockfile and literal versions.
 
 Neither extension is published to the Raycast Store.
 

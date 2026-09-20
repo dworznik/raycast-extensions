@@ -27,8 +27,8 @@ The built-in display is not listed: displayplacer warns that rotating the intern
 From the repository root:
 
 ```sh
-npm install
-npm run dev -w extensions/display-rotation
+pnpm install
+pnpm --filter display-rotation dev
 ```
 
 The extension stays installed in Raycast after you stop the process. No macOS permission prompt is involved: reading the screen names uses AppKit inside `osascript` rather than scripting another application.
