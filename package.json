@@ -1,7 +1,7 @@
 {
   "name": "raycast-extensions",
   "private": true,
-  "description": "Raycast extensions: menu bar display rotation via displayplacer, and iTerm2 profile switching per screen.",
+  "description": "Raycast extensions: display rotation via displayplacer, and iTerm2 profile switching per screen.",
   "license": "MIT",
   "author": "dworznik",
   "workspaces": [
