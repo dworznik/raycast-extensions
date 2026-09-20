@@ -1,0 +1,20 @@
+version: 2
+
+updates:
+  # The workflow actions were silently a major version behind until GitHub
+  # started warning about their Node 20 runtime; let Dependabot keep them current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dependencies:
+        patterns: ["*"]
