@@ -1,0 +1,4 @@
+# `ray lint` runs Prettier from the extension directory, so it needs its own ignore file.
+dist
+raycast-env.d.ts
+src/lib/__fixtures__

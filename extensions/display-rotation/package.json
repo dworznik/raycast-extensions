@@ -1,0 +1,68 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "display-rotation",
+  "title": "Display Rotation",
+  "description": "Flip a display between its natural and 90 degree layout from the menu bar, using displayplacer.",
+  "icon": "extension-icon.png",
+  "author": "dworznik",
+  "categories": [
+    "System"
+  ],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "display-rotation",
+      "title": "Display Rotation",
+      "subtitle": "displayplacer",
+      "description": "Menu bar item for flipping an external display between its natural and 90 degree rotation.",
+      "mode": "menu-bar",
+      "interval": "1m"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "persistentId",
+      "type": "textfield",
+      "required": true,
+      "title": "Display Persistent ID",
+      "description": "Persistent screen id of the display to rotate, as printed by `displayplacer list`.",
+      "placeholder": "37D8832A-2D66-02CA-B9F7-8F30A301B230"
+    },
+    {
+      "name": "naturalArgs",
+      "type": "textfield",
+      "required": true,
+      "title": "Natural Layout Arguments",
+      "description": "Full displayplacer argument string that puts every screen in its natural (degree 0) layout.",
+      "placeholder": "\"id:… res:1920x1080 origin:(1440,-180) degree:0\""
+    },
+    {
+      "name": "rotatedArgs",
+      "type": "textfield",
+      "required": true,
+      "title": "Rotated Layout Arguments",
+      "description": "Full displayplacer argument string that puts the display in its 90 degree layout.",
+      "placeholder": "\"id:… res:1080x1920 origin:(1440,-1020) degree:90\""
+    },
+    {
+      "name": "displayplacerPath",
+      "type": "textfield",
+      "required": false,
+      "default": "/opt/homebrew/bin/displayplacer",
+      "title": "displayplacer Path",
+      "description": "Path to the displayplacer binary."
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^2.4.1",
+    "@raycast/utils": "^2.3.1"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "lint": "ray lint",
+    "fix-lint": "ray lint --fix",
+    "typecheck": "tsc --noEmit",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}
