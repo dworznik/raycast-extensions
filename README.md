@@ -49,6 +49,8 @@ Run from the repo root to cover both extensions, or add `-w extensions/<name>` t
 
 Shared configuration lives at the root: `tsconfig.base.json` (each extension extends it), `eslint.config.js`, `.prettierrc` and `vitest.config.ts`. CI runs lint, typecheck, tests and `ray build` for both extensions on macOS.
 
+One wrinkle worth knowing: with `CI=true`, `ray lint` insists on a `package-lock.json` inside each extension folder, which is what the Raycast Store expects. A workspace keeps a single lockfile at the root instead, so the CI lint step unsets that flag. Publishing an extension to the Store later would mean generating a lockfile in its directory.
+
 Neither extension is published to the Raycast Store.
 
 ## License
