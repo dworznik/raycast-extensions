@@ -28,6 +28,8 @@ export interface Display {
   rotation: number;
   origin: Origin;
   enabled: boolean;
+  /** `Type: MacBook built in screen`, which displayplacer warns about rotating. */
+  isBuiltIn: boolean;
 }
 
 const PERSISTENT_ID = /^Persistent screen id:\s*(\S+)\s*$/m;
@@ -37,6 +39,8 @@ const RESOLUTION = /^Resolution:\s*(\d+)x(\d+)\s*$/m;
 const ORIGIN = /^Origin:\s*\((-?\d+),\s*(-?\d+)\)/m;
 const ROTATION = /^Rotation:\s*(-?\d+)/m;
 const ENABLED = /^Enabled:\s*(true|false)\s*$/m;
+const BUILT_IN = /^Type:\s*MacBook built in screen\s*$/m;
+const LAYOUT_COMMAND = /^displayplacer\s+(".*")\s*$/m;
 
 /** Maps any degree value onto the 0-359 range macOS reports. */
 export function normalizeRotation(degrees: number): number {
@@ -74,6 +78,7 @@ export function parseDisplayList(stdout: string): Display[] {
       rotation: normalizeRotation(Number(rotation[1])),
       origin: { x: Number(origin[1]), y: Number(origin[2]) },
       enabled: enabled[1] === "true",
+      isBuiltIn: BUILT_IN.test(block),
     });
   }
 
@@ -138,4 +143,18 @@ export function parseArgString(args: string): string[] {
   }
 
   return tokens;
+}
+
+/**
+ * Pulls the per-screen arguments out of the command displayplacer prints at the
+ * end of `list`, which describes the arrangement currently on screen.
+ *
+ * That line is the whole reason nothing has to be configured: it is a complete,
+ * working layout for every connected screen, so a rotation is just this layout
+ * with one segment changed.
+ */
+export function parseLayoutCommand(stdout: string): string[] {
+  const line = LAYOUT_COMMAND.exec(stdout.replace(/\r\n/g, "\n"));
+  if (line === null) return [];
+  return [...line[1].matchAll(/"([^"]*)"/g)].map((match) => match[1]);
 }

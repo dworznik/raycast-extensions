@@ -10,12 +10,10 @@ import { normalizeRotation } from "./displayplacer";
 export const NATURAL = 0;
 export const ROTATED = 90;
 
-export type TargetRotation = typeof NATURAL | typeof ROTATED;
+/** The rotations the dropdown offers, and the only ones macOS accepts. */
+export const ROTATIONS = [0, 90, 180, 270] as const;
 
-export interface LayoutPreferences {
-  naturalArgs: string;
-  rotatedArgs: string;
-}
+export type TargetRotation = (typeof ROTATIONS)[number];
 
 /**
  * Reads the dropdown argument. Raycast hands over an empty string when nothing
@@ -24,9 +22,11 @@ export interface LayoutPreferences {
 export function parseRotationArgument(value: string | undefined | null): TargetRotation | undefined {
   const raw = (value ?? "").trim();
   if (raw === "") return undefined;
-  if (raw === String(NATURAL)) return NATURAL;
-  if (raw === String(ROTATED)) return ROTATED;
-  throw new Error(`Unknown rotation argument: ${raw}`);
+  const rotation = ROTATIONS.find((candidate) => String(candidate) === raw);
+  if (rotation === undefined) {
+    throw new Error(`Unknown rotation argument: ${raw}`);
+  }
+  return rotation;
 }
 
 /**
@@ -37,11 +37,6 @@ export function parseRotationArgument(value: string | undefined | null): TargetR
 export function resolveTargetRotation(currentRotation: number, requested: TargetRotation | undefined): TargetRotation {
   if (requested !== undefined) return requested;
   return normalizeRotation(currentRotation) === NATURAL ? ROTATED : NATURAL;
-}
-
-/** The layout preference holding the arguments for a rotation. */
-export function layoutArgumentsFor(target: TargetRotation, preferences: LayoutPreferences): string {
-  return target === NATURAL ? preferences.naturalArgs : preferences.rotatedArgs;
 }
 
 /** Human-readable name of a rotation, for toasts and HUDs. */
