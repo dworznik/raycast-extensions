@@ -1,5 +1,4 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { findDisplayById, normalizeRotation, parseArgString, parseDisplayList } from "./displayplacer";
 
@@ -8,7 +7,7 @@ const EXTERNAL_ID = "22222222-2222-4222-8222-222222222222";
 const SECOND_EXTERNAL_ID = "33333333-3333-4333-8333-333333333333";
 
 function fixture(name: string): string {
-  return readFileSync(join(process.cwd(), "src/lib/__fixtures__", name), "utf8");
+  return readFileSync(new URL(`./__fixtures__/${name}`, import.meta.url), "utf8");
 }
 
 describe("parseDisplayList", () => {
