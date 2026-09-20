@@ -20,6 +20,12 @@ jobs:
       - run: npm ci
 
       - name: Lint
+        # `ray lint` only validates a per-extension package-lock.json when CI=true, because
+        # the Raycast Store requires one per extension folder. This is an npm workspace: the
+        # single lockfile lives at the repo root and is what `npm ci` installs from, so the
+        # check does not apply. Every other validation still runs.
+        env:
+          CI: "false"
         run: npm run lint
 
       - name: Typecheck
