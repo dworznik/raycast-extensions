@@ -1,12 +1,24 @@
-import { LaunchProps, getPreferenceValues, showHUD } from "@raycast/api";
-import { runAppleScript, showFailureToast } from "@raycast/utils";
+import {
+  Action,
+  ActionPanel,
+  Alert,
+  Color,
+  Icon,
+  Keyboard,
+  List,
+  Toast,
+  confirmAlert,
+  getPreferenceValues,
+  showToast,
+} from "@raycast/api";
+import { runAppleScript, showFailureToast, usePromise } from "@raycast/utils";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { SCREEN_NAMES_SCRIPT } from "./lib/applescript";
 import { parseDisplayList, parseLayoutCommand } from "./lib/displayplacer";
 import { rotateLayout } from "./lib/layout";
-import { parseRotationArgument, resolveTargetRotation, rotationLabel } from "./lib/rotation";
-import { defaultScreen, matchScreens, nameDisplays, parseScreenNames, type NamedDisplay } from "./lib/screens";
+import { rotationChoices, rotationLabel, type TargetRotation } from "./lib/rotation";
+import { nameDisplays, parseScreenNames, type NamedDisplay } from "./lib/screens";
 
 const run = promisify(execFile);
 
@@ -17,61 +29,127 @@ interface Preferences {
   displayplacerPath: string;
 }
 
-interface RotateDisplayArguments {
-  /** Screen name or prefix. Empty means "the one external screen". */
-  screen?: string;
-  /** Empty means "toggle". */
-  rotation?: string;
+interface Desktop {
+  screens: NamedDisplay[];
+  /** The arrangement displayplacer reports, one entry per screen. */
+  layout: string[];
 }
 
-export default async function Command(props: LaunchProps<{ arguments: RotateDisplayArguments }>) {
+export default function Command() {
   const { displayplacerPath } = getPreferenceValues<Preferences>();
-  const query = props.arguments?.screen ?? "";
+  const { data, error, isLoading, revalidate } = usePromise(() => readDesktop(displayplacerPath));
 
-  try {
-    const requested = parseRotationArgument(props.arguments?.rotation);
-    const { screens, layout } = await readScreens(displayplacerPath);
+  async function rotate(screen: NamedDisplay, degrees: TargetRotation) {
+    if (screen.isBuiltIn && !(await confirmBuiltInRotation(screen.name))) return;
 
-    if (screens.length === 0) {
-      await showFailureToast("displayplacer reported no screens.", { title: "No screens found" });
-      return;
+    const toast = await showToast({
+      style: Toast.Style.Animated,
+      title: `Rotating ${screen.name} to ${rotationLabel(degrees)}…`,
+    });
+
+    try {
+      // Re-read rather than trusting the rendered list: the arrangement may
+      // have changed since it was loaded.
+      const { layout } = await readDesktop(displayplacerPath);
+      await run(displayplacerPath, rotateLayout(layout, screen.persistentId, degrees));
+      await new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
+
+      const applied = (await readDesktop(displayplacerPath)).screens.find(
+        (candidate) => candidate.persistentId === screen.persistentId,
+      );
+      if (applied?.rotation !== degrees) {
+        throw new Error(`${screen.name} reports ${rotationLabel(applied?.rotation ?? screen.rotation)}.`);
+      }
+
+      toast.style = Toast.Style.Success;
+      toast.title = `${screen.name} is now ${rotationLabel(degrees)}`;
+    } catch (rotationError) {
+      await toast.hide();
+      await showFailureToast(rotationError, { title: `Could not rotate ${screen.name}` });
+    } finally {
+      revalidate();
     }
-
-    const screen = pickScreen(screens, query);
-    if ("problem" in screen) {
-      await showFailureToast(`Connected: ${screens.map((candidate) => candidate.name).join(", ")}.`, {
-        title: screen.problem,
-      });
-      return;
-    }
-
-    const target = resolveTargetRotation(screen.rotation, requested);
-    if (screen.rotation === target) {
-      await showHUD(`${screen.name} already ${rotationLabel(target)}`);
-      return;
-    }
-
-    await run(displayplacerPath, rotateLayout(layout, screen.persistentId, target));
-    await new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
-
-    const applied = (await readScreens(displayplacerPath)).screens.find(
-      (candidate) => candidate.persistentId === screen.persistentId,
-    );
-    if (applied?.rotation !== target) {
-      await showFailureToast(`${screen.name} reports ${rotationLabel(applied?.rotation ?? screen.rotation)}.`, {
-        title: `Could not rotate to ${rotationLabel(target)}`,
-      });
-      return;
-    }
-
-    await showHUD(`${screen.name} rotated to ${rotationLabel(target)}`);
-  } catch (error) {
-    await showFailureToast(error, { title: "Could not rotate the display" });
   }
+
+  const screens = data?.screens ?? [];
+
+  return (
+    <List isLoading={isLoading} searchBarPlaceholder="Search displays…">
+      {screens.length === 0 ? (
+        <List.EmptyView
+          icon={Icon.Monitor}
+          title={error ? "Could not run displayplacer" : "No displays found"}
+          description={error ? error.message : "displayplacer reported no screens."}
+        />
+      ) : (
+        screens.map((screen) => (
+          <List.Item
+            key={screen.persistentId}
+            icon={screen.isBuiltIn ? Icon.Desktop : Icon.Monitor}
+            title={screen.name}
+            subtitle={`${screen.resolution.width}×${screen.resolution.height}`}
+            accessories={accessoriesFor(screen)}
+            actions={
+              <ActionPanel>
+                {screen.enabled && (
+                  <ActionPanel.Section title={screen.name}>
+                    {rotationChoices(screen.rotation).map((degrees) => (
+                      <Action
+                        key={degrees}
+                        icon={Icon.RotateClockwise}
+                        title={`Rotate to ${rotationLabel(degrees)}`}
+                        onAction={() => rotate(screen, degrees)}
+                      />
+                    ))}
+                  </ActionPanel.Section>
+                )}
+                <ActionPanel.Section>
+                  <Action
+                    icon={Icon.ArrowClockwise}
+                    title="Refresh"
+                    shortcut={Keyboard.Shortcut.Common.Refresh}
+                    onAction={revalidate}
+                  />
+                  <Action.CopyToClipboard
+                    title="Copy Persistent ID"
+                    content={screen.persistentId}
+                    shortcut={Keyboard.Shortcut.Common.Copy}
+                  />
+                </ActionPanel.Section>
+              </ActionPanel>
+            }
+          />
+        ))
+      )}
+    </List>
+  );
+}
+
+function accessoriesFor(screen: NamedDisplay): List.Item.Accessory[] {
+  const accessories: List.Item.Accessory[] = [];
+  if (!screen.enabled) {
+    accessories.push({ tag: { value: "Disabled", color: Color.SecondaryText } });
+  }
+  if (screen.origin.x === 0 && screen.origin.y === 0) {
+    accessories.push({ tag: { value: "Main", color: Color.SecondaryText } });
+  }
+  accessories.push({ tag: rotationLabel(screen.rotation) });
+  return accessories;
+}
+
+/** displayplacer warns that rotating the internal screen can hang the Mac. */
+function confirmBuiltInRotation(name: string): Promise<boolean> {
+  return confirmAlert({
+    icon: Icon.Warning,
+    title: `Rotate ${name}?`,
+    message:
+      "displayplacer warns that rotating the built-in screen may crash the computer. It will be rotated after a reboot.",
+    primaryAction: { title: "Rotate Anyway", style: Alert.ActionStyle.Destructive },
+  });
 }
 
 /** Everything the command knows about the desktop, all of it discovered. */
-async function readScreens(displayplacerPath: string): Promise<{ screens: NamedDisplay[]; layout: string[] }> {
+async function readDesktop(displayplacerPath: string): Promise<Desktop> {
   const [{ stdout }, names] = await Promise.all([
     run(displayplacerPath, ["list"]),
     runAppleScript(SCREEN_NAMES_SCRIPT),
@@ -80,17 +158,5 @@ async function readScreens(displayplacerPath: string): Promise<{ screens: NamedD
   return {
     screens: nameDisplays(parseDisplayList(stdout), parseScreenNames(names)),
     layout: parseLayoutCommand(stdout),
-  };
-}
-
-function pickScreen(screens: NamedDisplay[], query: string): NamedDisplay | { problem: string } {
-  if (query.trim() === "") {
-    return defaultScreen(screens) ?? { problem: "Name the screen to rotate" };
-  }
-
-  const matches = matchScreens(screens, query);
-  if (matches.length === 1) return matches[0];
-  return {
-    problem: matches.length === 0 ? `No screen matches “${query.trim()}”` : `Several screens match “${query.trim()}”`,
   };
 }

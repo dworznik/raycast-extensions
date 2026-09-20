@@ -43,3 +43,13 @@ export function resolveTargetRotation(currentRotation: number, requested: Target
 export function rotationLabel(rotation: number): string {
   return normalizeRotation(rotation) === NATURAL ? "Natural" : `${normalizeRotation(rotation)}°`;
 }
+
+/**
+ * The rotations to offer for a screen: everything except the one it is already
+ * in, with the toggle target first so the default action flips the screen.
+ */
+export function rotationChoices(currentRotation: number): TargetRotation[] {
+  const current = normalizeRotation(currentRotation);
+  const toggled = resolveTargetRotation(current, undefined);
+  return [toggled, ...ROTATIONS.filter((rotation) => rotation !== toggled && rotation !== current)];
+}

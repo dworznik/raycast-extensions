@@ -2,10 +2,10 @@
 
 Raycast extensions for a laptop that spends its day next to an external display. Each one is a separate extension, so you can install only the one you want.
 
-| Extension                                               | What it does                                                                                         |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| [Display Rotation](extensions/display-rotation)         | Rotates any connected display with `displayplacer` — discovers the screens by name, no configuration |
-| [iTerm Profile Switch](extensions/iterm-profile-switch) | Switches the frontmost iTerm2 session to the profile that belongs to the screen its window is on     |
+| Extension                                               | What it does                                                                                       |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [Display Rotation](extensions/display-rotation)         | Lists the connected displays and rotates the one you pick, with `displayplacer` — no configuration |
+| [iTerm Profile Switch](extensions/iterm-profile-switch) | Switches the frontmost iTerm2 session to the profile that belongs to the screen its window is on   |
 
 Nothing machine specific is committed: display ids, layouts and profile names all live in each extension's Raycast preferences.
 

@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { NATURAL, ROTATED, parseRotationArgument, resolveTargetRotation, rotationLabel } from "./rotation";
+import {
+  NATURAL,
+  ROTATED,
+  parseRotationArgument,
+  resolveTargetRotation,
+  rotationChoices,
+  rotationLabel,
+} from "./rotation";
 
 describe("parseRotationArgument", () => {
   it("reads every dropdown value", () => {
@@ -54,5 +61,20 @@ describe("rotationLabel", () => {
     [-90, "270°"],
   ])("names rotation %i", (rotation, expected) => {
     expect(rotationLabel(rotation)).toBe(expected);
+  });
+});
+
+describe("rotationChoices", () => {
+  it.each([
+    [0, [90, 180, 270]],
+    [90, [0, 180, 270]],
+    [180, [0, 90, 270]],
+    [270, [0, 90, 180]],
+  ])("offers the other rotations for %i, toggle target first", (current, expected) => {
+    expect(rotationChoices(current)).toEqual(expected);
+  });
+
+  it("normalizes before choosing", () => {
+    expect(rotationChoices(-90)).toEqual([0, 90, 180]);
   });
 });
