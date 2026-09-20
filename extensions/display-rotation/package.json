@@ -29,8 +29,9 @@
     }
   ],
   "dependencies": {
-    "@raycast/api": "^2.4.1",
-    "@raycast/utils": "^2.3.1"
+    "@raycast/api": "catalog:",
+    "@raycast/utils": "catalog:",
+    "react": "catalog:"
   },
   "scripts": {
     "build": "ray build",
@@ -39,5 +40,13 @@
     "fix-lint": "ray lint --fix",
     "typecheck": "tsc --noEmit",
     "publish": "npx @raycast/api@latest publish"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
   }
 }

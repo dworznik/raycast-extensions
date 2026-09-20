@@ -4,28 +4,21 @@
   "description": "Raycast extensions: display rotation via displayplacer, and iTerm2 profile switching per screen.",
   "license": "MIT",
   "author": "dworznik",
-  "workspaces": [
-    "extensions/*"
-  ],
   "scripts": {
-    "build": "npm run build --workspaces",
-    "lint": "npm run lint --workspaces",
-    "fix-lint": "npm run fix-lint --workspaces",
-    "typecheck": "tsc --noEmit && npm run typecheck --workspaces",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "fix-lint": "pnpm -r run fix-lint",
+    "typecheck": "tsc --noEmit && pnpm -r run typecheck",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@raycast/eslint-config": "^2.2.0",
-    "@types/node": "22.19.17",
-    "@types/react": "19.0.10",
-    "eslint": "^10.11.0",
-    "prettier": "^3.9.8",
-    "typescript": "^5.9.3",
-    "vitest": "^5.0.1"
+    "@raycast/eslint-config": "catalog:",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
-  "allowScripts": {
-    "esbuild": true,
-    "fsevents": true
-  }
+  "packageManager": "pnpm@11.7.0"
 }

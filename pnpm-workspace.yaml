@@ -1,0 +1,20 @@
+packages:
+  - extensions/*
+
+# One version per dependency for the whole repo; the packages reference these
+# with "catalog:" so the two extensions cannot drift apart.
+catalog:
+  "@raycast/api": ^2.4.1
+  "@raycast/eslint-config": ^2.2.0
+  "@raycast/utils": ^2.3.1
+  "@types/node": 22.19.17
+  "@types/react": 19.0.10
+  eslint: ^10.11.0
+  prettier: ^3.9.8
+  react: 19.0.0
+  typescript: ^5.9.3
+  vitest: ^5.0.1
+
+# esbuild's postinstall unpacks the platform binary that `ray build` runs on.
+allowBuilds:
+  esbuild: true

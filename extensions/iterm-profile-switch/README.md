@@ -14,8 +14,8 @@ Run it while iTerm2 is frontmost. If iTerm2 is not frontmost it shows a failure 
 From the repository root:
 
 ```sh
-npm install
-npm run dev -w extensions/iterm-profile-switch
+pnpm install
+pnpm --filter iterm-profile-switch dev
 ```
 
 The extension stays installed in Raycast after you stop the process.
