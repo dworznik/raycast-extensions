@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { matchesExternalScreen, resolveProfileName, setProfileEscapeSequence, type ProfilePreferences } from "./iterm";
+import {
+  matchesExternalScreen,
+  resolveProfileName,
+  setProfileEscapeSequence,
+  ttyWriteCommand,
+  type ProfilePreferences,
+} from "./iterm";
 
 const PREFERENCES: ProfilePreferences = {
   screenNamePrefix: "ASUS",
@@ -65,5 +71,27 @@ describe("setProfileEscapeSequence", () => {
   it("refuses a name that could terminate the sequence early", () => {
     expect(() => setProfileEscapeSequence("Asus\u0007Default")).toThrow(/control characters/i);
     expect(() => setProfileEscapeSequence("Asus\u001b]1337;SetProfile=Other")).toThrow(/control characters/i);
+  });
+});
+
+describe("ttyWriteCommand", () => {
+  it("writes the payload to the tty through printf", () => {
+    expect(ttyWriteCommand("/dev/ttys003", "\u001b]1337;SetProfile=Asus\u0007")).toEqual({
+      file: "/bin/sh",
+      args: ["-c", 'printf %s "$1" > "$2"', "sh", "\u001b]1337;SetProfile=Asus\u0007", "/dev/ttys003"],
+    });
+  });
+
+  it("passes the payload and the path as arguments, never as script text", () => {
+    const { args } = ttyWriteCommand("/dev/ttys003; rm -rf /", "$(whoami) `id` > /tmp/x");
+
+    expect(args[1]).toBe('printf %s "$1" > "$2"');
+    expect(args[3]).toBe("$(whoami) `id` > /tmp/x");
+    expect(args[4]).toBe("/dev/ttys003; rm -rf /");
+  });
+
+  it("trims the tty and refuses an empty one", () => {
+    expect(ttyWriteCommand(" /dev/ttys003 ", "x").args[4]).toBe("/dev/ttys003");
+    expect(() => ttyWriteCommand("   ", "x")).toThrow(/no tty/i);
   });
 });

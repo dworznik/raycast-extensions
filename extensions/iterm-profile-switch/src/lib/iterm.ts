@@ -50,3 +50,20 @@ export function setProfileEscapeSequence(profileName: string): string {
   }
   return `\u001b]1337;SetProfile=${name}\u0007`;
 }
+
+/**
+ * How to deliver the control sequence to a session's tty.
+ *
+ * Writing to the device directly is the obvious thing, and works on Node. It is
+ * routed through `printf` instead because a Raycast-compatible runtime may
+ * implement `fs.writeFile` as "create a file at this path", which a character
+ * device is not. The sequence and the path are positional arguments, so neither
+ * is ever parsed as shell syntax.
+ */
+export function ttyWriteCommand(tty: string, payload: string): { file: string; args: string[] } {
+  const target = tty.trim();
+  if (target === "") {
+    throw new Error("The session reported no tty");
+  }
+  return { file: "/bin/sh", args: ["-c", 'printf %s "$1" > "$2"', "sh", payload, target] };
+}

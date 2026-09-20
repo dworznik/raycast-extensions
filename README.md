@@ -22,6 +22,21 @@ pnpm --filter <extension> dev
 
 `pnpm … dev` builds that one extension and imports it into Raycast, where it stays installed after you stop the process with `Ctrl-C`. Run it again per extension you want. Nothing installs an extension you did not ask for.
 
+## Run them in Tinycast
+
+[Tinycast](https://github.com/abue-ammar/tinycast) is a native macOS launcher that runs Raycast extensions as they are — the same manifest and the same built command bundles, rendered as SwiftUI. Build an extension for distribution and point Tinycast at the output:
+
+```sh
+pnpm --filter <extension> dist        # writes extensions/<extension>/dist
+```
+
+Then, in Tinycast: Settings → Extensions → **Install New** → **Add Folder…** → pick that `dist` directory. (Extensions are off until you turn them on there.)
+
+Two things this repo does on Tinycast's account, neither of which costs anything under Raycast:
+
+- **No `menu-bar` commands.** Tinycast does not run them; `view` and `no-view` are both fine.
+- **No raw writes to a character device.** A runtime is free to implement `fs.writeFile` as "create a file at this path", which a tty is not, so the iTerm extension sends its control sequence through `printf` with the payload and the path as positional arguments.
+
 ## Layout
 
 ```

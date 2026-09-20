@@ -33,6 +33,12 @@ pnpm --filter display-rotation dev
 
 The extension stays installed in Raycast after you stop the process. No macOS permission prompt is involved: reading the screen names uses AppKit inside `osascript` rather than scripting another application.
 
+For [Tinycast](https://github.com/abue-ammar/tinycast) instead of Raycast, build the distributable bundle and add its folder in Tinycast's Settings → Extensions:
+
+```sh
+pnpm --filter display-rotation dist
+```
+
 ## Preferences
 
 | Preference         | Required | Description                                   |
